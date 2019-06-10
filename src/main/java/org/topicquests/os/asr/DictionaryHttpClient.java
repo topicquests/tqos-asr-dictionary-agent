@@ -69,11 +69,14 @@ public class DictionaryHttpClient implements IDictionaryClient {
 		//build query
 		StringBuilder buf = new StringBuilder("{");
 		buf.append("\"verb\":\"addWord\","); // the verb
-		buf.append("\"field\":\"word\","); // the field
+		buf.append("\"word\":\""+word+"\","); // the field
 		buf.append("\"clientId\":\""+CLIENT_ID+"\"}");
 		String query = buf.toString();
 		try {
 			query = URLEncoder.encode(query, "UTF-8");
+			String q = SERVER_URL+query;
+			environment.logDebug("DictionaryClientQuery "+q);	
+			getQuery(q, result);
 		} catch (Exception e) {
 			String x = e.getMessage()+" : "+buf.toString();
 			environment.logError(x, e);

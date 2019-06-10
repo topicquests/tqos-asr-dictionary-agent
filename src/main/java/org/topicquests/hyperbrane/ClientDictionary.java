@@ -17,6 +17,8 @@ package org.topicquests.hyperbrane;
 
 
 import net.minidev.json.*;
+import net.minidev.json.parser.JSONParser;
+
 import org.topicquests.hyperbrane.api.IDictionary;
 import org.topicquests.os.asr.api.IDictionaryClient;
 import org.topicquests.os.asr.api.IDictionaryEnvironment;
@@ -31,7 +33,7 @@ import org.topicquests.support.api.IResult;
  * <li>ids -- word/id pairs</li>
  * <li>sentences -- id/sentenceList pairs</li></p>
  */
-public class ConcordanceDictionary  implements IDictionary {
+public class ClientDictionary  implements IDictionary {
 	private IDictionaryEnvironment environment;
 	private IDictionaryClient dictionaryClient;
 	private IStatisticsClient statisticsClient;
@@ -45,7 +47,7 @@ public class ConcordanceDictionary  implements IDictionary {
 	/**
 	 * 
 	 */
-	public ConcordanceDictionary(IDictionaryEnvironment env) {
+	public ClientDictionary(IDictionaryEnvironment env) {
 		environment = env;
 		dictionaryClient = environment.getDictionaryClient();
 		statisticsClient = environment.getStatisticsClient();
@@ -54,7 +56,15 @@ public class ConcordanceDictionary  implements IDictionary {
 	
 	void bootDictionary() {
 		IResult r = dictionaryClient.getDictionary();
-		dictionary = (JSONObject)r.getResultObject();
+		environment.logDebug("ClientDictionary.boot "+r.getErrorString()+" | "+(r.getResultObject() != null));
+		try {
+			JSONParser p = new JSONParser(JSONParser.MODE_JSON_SIMPLE);
+			String json = (String)r.getResultObject();
+			dictionary = (JSONObject)p.parse(json);
+		} catch (Exception e) {
+			environment.logError(e.getMessage(), e);
+			throw new RuntimeException(e);
+		}
 	}
 	
 	/* (non-Javadoc)
@@ -62,6 +72,8 @@ public class ConcordanceDictionary  implements IDictionary {
 	 */
 	@Override
 	public String getWord(String id) {
+		if (id.equals("0"))
+			return "\"";
 		synchronized(dictionary) {
 			JSONObject words = getWords();
 			return (String)words.get(id);
@@ -83,6 +95,8 @@ public class ConcordanceDictionary  implements IDictionary {
 	 */
 	@Override
 	public String getWordId(String word) {
+		if (word.equals("\""))
+			return "0";
 		synchronized(dictionary) {
 			JSONObject ids = getIDs();
 			String lc = word.toLowerCase();
@@ -91,25 +105,40 @@ public class ConcordanceDictionary  implements IDictionary {
 	}
 
 	/////////////////////////////////////////////
-	// ConcordanceDictionary should not be engaged in statistics, just its own.
+	// ClientDictionary should not be engaged in statistics, just its own.
 	/////////////////////////////////////////////
 	/* (non-Javadoc)
 	 * @see org.topicquests.concordance.api.IDictionary#addWord(java.lang.String, java.lang.String)
 	 */
 	@Override
 	public String addWord(String theWord) {
+		statisticsClient.addToKey(IASRFields.WORDS_READ);
+		environment.logDebug("Dictionary.addWord "+theWord);
+		if (theWord.equals("\""))
+			return "0"; // default id for a quote character
 		//Will get the word even if lower case
 		String id = getWordId(theWord);
-		statisticsClient.addToKey(IASRFields.WORDS_READ);
+		environment.logDebug("Dictionary.addWord-1 "+id);
 		if (id == null) {
+			statisticsClient.addToKey(IASRFields.WORDS_NEW);
 			IResult r = dictionaryClient.addWord(theWord);
-			JSONObject jo = (JSONObject)r.getResultObject();
-			id = jo.getAsString("word");
+			environment.logDebug("Dictionary.addWord-2 "+r.getErrorString()+" | "+r.getResultObject());
+			JSONObject jo = null;
+			String json = (String)r.getResultObject();
+			try {
+				JSONParser p = new JSONParser(JSONParser.MODE_JSON_SIMPLE);
+				jo = (JSONObject)p.parse(json);
+			} catch (Exception e) {
+				environment.logError(e.getMessage(), e);
+				e.printStackTrace();
+			}
+			id = jo.getAsString("cargo");
 			synchronized(dictionary) {
 				getWords().put(id, theWord);
 				getIDs().put(theWord.toLowerCase(), id);
 			}
 		}
+		environment.logDebug("Dictionary.addWord-3 "+id);
 		return id;
 	}
 

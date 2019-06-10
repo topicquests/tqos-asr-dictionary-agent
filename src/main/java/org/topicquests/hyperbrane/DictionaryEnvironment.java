@@ -29,10 +29,6 @@ public class DictionaryEnvironment extends RootEnvironment
 		super(configPath, logConfigPath);
 	}
 	
-	public String getStringProperty(String key) {
-		return (String)getProperties().get(key);
-	}
-
 	@Override
 	public IStatisticsClient getStatisticsClient() {
 		return statisticsClient;
@@ -60,7 +56,7 @@ public class DictionaryEnvironment extends RootEnvironment
 
 	@Override
 	public void initializeDictionary() {
-		dictionary = new ConcordanceDictionary(this);
+		dictionary = new ClientDictionary(this);
 	}
 
 	@Override
@@ -71,6 +67,12 @@ public class DictionaryEnvironment extends RootEnvironment
 	@Override
 	public void createDictionaryClient() {
 		dictionaryClient = new DictionaryHttpClient(this);
+	}
+
+	@Override
+	public void shutDown() {
+		// TODO Auto-generated method stub
+		
 	}
 
 }
