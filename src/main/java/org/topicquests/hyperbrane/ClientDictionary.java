@@ -1,17 +1,7 @@
-/*
- * Copyright 2014, TopicQuests
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing,
- * software distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions
- * and limitations under the License.
+/**
+ * Copyright 2019, TopicQuests Foundation
+ *  This source code is available under the terms of the Affero General Public License v3.
+ *  Please see LICENSE.txt for full license terms, including the availability of proprietary exceptions.
  */
 package org.topicquests.hyperbrane;
 
@@ -52,19 +42,13 @@ public class ClientDictionary  implements IDictionary {
 		dictionaryClient = environment.getDictionaryClient();
 		statisticsClient = environment.getStatisticsClient();
 		bootDictionary();
+		environment.logDebug("ClientDictionary- "+dictionary);
 	}
 	
 	void bootDictionary() {
-		IResult r = dictionaryClient.getDictionary();
-		environment.logDebug("ClientDictionary.boot "+r.getErrorString()+" | "+(r.getResultObject() != null));
-		try {
-			JSONParser p = new JSONParser(JSONParser.MODE_JSON_SIMPLE);
-			String json = (String)r.getResultObject();
-			dictionary = (JSONObject)p.parse(json);
-		} catch (Exception e) {
-			environment.logError(e.getMessage(), e);
-			throw new RuntimeException(e);
-		}
+		dictionary = new JSONObject();
+		dictionary.put(WORDS, new JSONObject());
+		dictionary.put(IDS, new JSONObject());
 	}
 	
 	/* (non-Javadoc)
@@ -99,6 +83,7 @@ public class ClientDictionary  implements IDictionary {
 			return "0";
 		synchronized(dictionary) {
 			JSONObject ids = getIDs();
+			System.out.println("CD.getWordIds "+ids+" "+word);
 			String lc = word.toLowerCase();
 			return ids.getAsString(lc);
 		}
