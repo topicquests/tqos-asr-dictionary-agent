@@ -83,7 +83,7 @@ public class ClientDictionary  implements IDictionary {
 			return "0";
 		synchronized(dictionary) {
 			JSONObject ids = getIDs();
-			System.out.println("CD.getWordIds "+ids+" "+word);
+			//System.out.println("CD.getWordIds "+ids+" "+word);
 			String lc = word.toLowerCase();
 			return ids.getAsString(lc);
 		}
@@ -98,16 +98,16 @@ public class ClientDictionary  implements IDictionary {
 	@Override
 	public String addWord(String theWord) {
 		statisticsClient.addToKey(IASRFields.WORDS_READ);
-		environment.logDebug("Dictionary.addWord "+theWord);
+		//environment.logDebug("Dictionary.addWord "+theWord);
 		if (theWord.equals("\""))
 			return "0"; // default id for a quote character
 		//Will get the word even if lower case
 		String id = getWordId(theWord);
-		environment.logDebug("Dictionary.addWord-1 "+id);
+		//environment.logDebug("Dictionary.addWord-1 "+id);
 		if (id == null) {
 			statisticsClient.addToKey(IASRFields.WORDS_NEW);
 			IResult r = dictionaryClient.addWord(theWord);
-			environment.logDebug("Dictionary.addWord-2 "+r.getErrorString()+" | "+r.getResultObject());
+			//environment.logDebug("Dictionary.addWord-2 "+r.getErrorString()+" | "+r.getResultObject());
 			JSONObject jo = null;
 			String json = (String)r.getResultObject();
 			try {
@@ -123,7 +123,7 @@ public class ClientDictionary  implements IDictionary {
 				getIDs().put(theWord.toLowerCase(), id);
 			}
 		}
-		environment.logDebug("Dictionary.addWord-3 "+id);
+		//environment.logDebug("Dictionary.addWord-3 "+id);
 		return id;
 	}
 

@@ -77,7 +77,7 @@ public class DictionaryHttpClient implements IDictionaryClient {
 		try {
 			query = URLEncoder.encode(query, "UTF-8");
 			String q = SERVER_URL+query;
-			environment.logDebug("DictionaryClientQuery "+q);	
+			//environment.logDebug("DictionaryClientQuery "+q);	
 			getQuery(q, result);
 		} catch (Exception e) {
 			String x = e.getMessage()+" : "+buf.toString();
