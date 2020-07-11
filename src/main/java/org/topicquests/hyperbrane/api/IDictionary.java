@@ -5,7 +5,8 @@
  */
 package org.topicquests.hyperbrane.api;
 
-import java.io.Writer;
+
+import org.topicquests.support.api.IResult;
 
 import net.minidev.json.JSONObject;
 
@@ -41,7 +42,7 @@ public interface IDictionary {
 	 * @param word
 	 * @return
 	 */
-	String addWord(String word);
+	IResult addWord(String word);
 		
 	JSONObject getDictionary();
 	

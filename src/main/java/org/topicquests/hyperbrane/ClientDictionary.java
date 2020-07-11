@@ -14,6 +14,7 @@ import org.topicquests.os.asr.api.IDictionaryClient;
 import org.topicquests.os.asr.api.IDictionaryEnvironment;
 import org.topicquests.os.asr.api.IStatisticsClient;
 import org.topicquests.os.asr.common.api.IASRFields;
+import org.topicquests.support.ResultPojo;
 import org.topicquests.support.api.IResult;
 
 /**
@@ -96,18 +97,19 @@ public class ClientDictionary  implements IDictionary {
 	 * @see org.topicquests.concordance.api.IDictionary#addWord(java.lang.String, java.lang.String)
 	 */
 	@Override
-	public String addWord(String theWord) {
-		statisticsClient.addToKey(IASRFields.WORDS_READ);
+	public IResult addWord(String theWord) {
+		IResult result = new ResultPojo();
+		result.setResultObject("0"); //default
+		result.setResultObjectA(new Boolean(true)); // default
 		//environment.logDebug("Dictionary.addWord "+theWord);
 		if (theWord.equals("\""))
-			return "0"; // default id for a quote character
+			return result; // default id for a quote character
 		//Will get the word even if lower case
 		String id = getWordId(theWord);
 		//environment.logDebug("Dictionary.addWord-1 "+id);
 		if (id == null) {
-			statisticsClient.addToKey(IASRFields.WORDS_NEW);
 			IResult r = dictionaryClient.addWord(theWord);
-			//environment.logDebug("Dictionary.addWord-2 "+r.getErrorString()+" | "+r.getResultObject());
+			environment.logDebug("Dictionary.addWord-2 "+r.getErrorString()+" | "+r.getResultObject());
 			JSONObject jo = null;
 			String json = (String)r.getResultObject();
 			try {
@@ -117,14 +119,20 @@ public class ClientDictionary  implements IDictionary {
 				environment.logError(e.getMessage(), e);
 				e.printStackTrace();
 			}
+			boolean isNew = ((Boolean)jo.get("isNewWord")).booleanValue();
+			if (isNew)
+				statisticsClient.addToKey(IASRFields.WORDS_NEW);
+			else
+				result.setResultObjectA(new Boolean(false));
 			id = jo.getAsString("cargo");
+			result.setResultObject(id);
 			synchronized(dictionary) {
 				getWords().put(id, theWord);
 				getIDs().put(theWord.toLowerCase(), id);
 			}
 		}
 		//environment.logDebug("Dictionary.addWord-3 "+id);
-		return id;
+		return result;
 	}
 
 
