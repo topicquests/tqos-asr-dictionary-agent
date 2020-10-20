@@ -5,8 +5,13 @@
  */
 package org.topicquests.os.asr;
 
+import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.io.PrintWriter;
+import java.io.Writer;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLEncoder;
@@ -74,11 +79,9 @@ public class DictionaryHttpClient implements IDictionaryClient {
 		buf.append("\"word\":\""+word+"\","); // the field
 		buf.append("\"clientId\":\""+CLIENT_ID+"\"}");
 		String query = buf.toString();
+		environment.logDebug("DictionaryHttpClient.addWord "+word+"\n"+query);
 		try {
-			query = URLEncoder.encode(query, "UTF-8");
-			String q = SERVER_URL+query;
-			//environment.logDebug("DictionaryClientQuery "+q);	
-			getQuery(q, result);
+			getQuery(query, result);
 		} catch (Exception e) {
 			String x = e.getMessage()+" : "+buf.toString();
 			environment.logError(x, e);
@@ -96,15 +99,20 @@ public class DictionaryHttpClient implements IDictionaryClient {
 		
 		BufferedReader rd = null;
 		HttpURLConnection con = null;
-
+		PrintWriter out = null;
 		try {
-			URL urx = new URL(query);
+			URL urx = new URL(SERVER_URL);
 			con = (HttpURLConnection) urx.openConnection();
 			con.setReadTimeout(500000); //29 seconds for 1m words - leave lots of time
+			con.setRequestProperty("Content-Type", "application/json; charset=utf-8");
 			con.setRequestMethod("GET");
 			con.setDoInput(true);
 			con.setDoOutput(true);
-			con.connect();
+			OutputStream os = con.getOutputStream();
+			OutputStreamWriter bos = new OutputStreamWriter(os, "UTF-8");
+			out = new PrintWriter(bos, true);
+			out.print(query);
+			out.close();
 			rd = new BufferedReader(new InputStreamReader(con.getInputStream()));
 			StringBuilder buf = new StringBuilder();
 
@@ -117,6 +125,7 @@ public class DictionaryHttpClient implements IDictionaryClient {
 		} catch (Exception var18) {
 			var18.printStackTrace();
 			result.addErrorString(var18.getMessage());
+			environment.logError(var18.getMessage()+"|"+query, var18);
 		} finally {
 			try {
 				if (rd != null) {
@@ -126,9 +135,11 @@ public class DictionaryHttpClient implements IDictionaryClient {
 				if (con != null) {
 					con.disconnect();
 				}
+				
 			} catch (Exception var17) {
 				var17.printStackTrace();
 				result.addErrorString(var17.getMessage());
+				environment.logError(var17.getMessage(), var17);
 			}
 
 		}

@@ -28,7 +28,7 @@ public class ClientDictionary  implements IDictionary {
 	private IDictionaryEnvironment environment;
 	private IDictionaryClient dictionaryClient;
 	private IStatisticsClient statisticsClient;
-	private JSONObject dictionary;
+	private JSONObject dictionary; // a local cache
 	static final String 
 		WORDS 		= "words",
 		//an index of words, returning their id values
@@ -100,18 +100,19 @@ public class ClientDictionary  implements IDictionary {
 	public IResult addWord(String theWord) {
 		IResult result = new ResultPojo();
 		result.setResultObject("0"); //default
-		result.setResultObjectA(new Boolean(true)); // default
-		//environment.logDebug("Dictionary.addWord "+theWord);
+		result.setResultObjectA(new Boolean(true)); // default is new word
+		environment.logDebug("Dictionary.addWord "+theWord);
 		if (theWord.equals("\""))
 			return result; // default id for a quote character
 		//Will get the word even if lower case
 		String id = getWordId(theWord);
-		//environment.logDebug("Dictionary.addWord-1 "+id);
+		environment.logDebug("Dictionary.addWord-1 "+id);
 		if (id == null) {
 			IResult r = dictionaryClient.addWord(theWord);
 			environment.logDebug("Dictionary.addWord-2 "+r.getErrorString()+" | "+r.getResultObject());
 			JSONObject jo = null;
 			String json = (String)r.getResultObject();
+			//TODO null check
 			try {
 				JSONParser p = new JSONParser(JSONParser.MODE_JSON_SIMPLE);
 				jo = (JSONObject)p.parse(json);
@@ -120,18 +121,21 @@ public class ClientDictionary  implements IDictionary {
 				e.printStackTrace();
 			}
 			boolean isNew = ((Boolean)jo.get("isNewWord")).booleanValue();
+			environment.logDebug("Dictionary.addWord-3 "+isNew);
 			if (isNew)
 				statisticsClient.addToKey(IASRFields.WORDS_NEW);
 			else
 				result.setResultObjectA(new Boolean(false));
 			id = jo.getAsString("cargo");
+			environment.logDebug("Dictionary.addWord-4 "+id);
 			result.setResultObject(id);
 			synchronized(dictionary) {
 				getWords().put(id, theWord);
 				getIDs().put(theWord.toLowerCase(), id);
 			}
-		}
-		//environment.logDebug("Dictionary.addWord-3 "+id);
+		} else
+			result.setResultObject(id);
+		environment.logDebug("Dictionary.addWord-5 "+id);
 		return result;
 	}
 
