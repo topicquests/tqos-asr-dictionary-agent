@@ -192,12 +192,12 @@
     	<dependency>
     		<groupId>org.topicquests</groupId>
     		<artifactId>tq-support</artifactId>
-    		<version>1.8.0-SNAPSHOT</version>
+    		<version>1.9.0-SNAPSHOT</version>
     	</dependency>
     	<dependency>
     		<groupId>org.topicquests</groupId>
     		<artifactId>tqos-asr-common</artifactId>
-    		<version>0.3.0-SNAPSHOT</version>
+    		<version>0.5.0-SNAPSHOT</version>
     	</dependency>
     	<dependency>
     		<groupId>org.topicquests</groupId>
